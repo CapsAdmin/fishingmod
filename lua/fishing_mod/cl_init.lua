@@ -21,31 +21,12 @@ end
 
 hook.Add("InitPostEntity", "Init Fish Mod", function()
 	RunConsoleCommand("fishing_mod_request_init")
-	
-	FMOldCalcVehicleThirdPersonView = FMOldCalcVehicleThirdPersonView or GAMEMODE.CalcVehicleThirdPersonView
-
-	function GAMEMODE:CalcVehicleThirdPersonView(vehicle, ply, position, angles, fov)
-		if ply:GetFishingRod() and IsValid(ply:GetNWEntity("weapon seat")) then
-			local view = {}
-			view.origin = ply:GetShootPos() + 
-				(ply:EyeAngles():Right() * 50) + 
-				(Angle(0,ply:EyeAngles().y,0):Forward() * -150) + 
-				(Angle(0,0,ply:EyeAngles().z):Up() * 20)
-			
-			
-			view.angles = Angle(math.Clamp(ply:EyeAngles().p-30, -70, 15), ply:EyeAngles().y, 0)		
-			
-			return view
-		end
-		return FMOldCalcVehicleThirdPersonView(self, vehicle, ply, position, angles, fov)
-	end
-
 end)
 
 hook.Add( "HUDPaint", "Fishingmod:HUDPaint", function()
 	local entity = LocalPlayer():GetEyeTrace().Entity
 	entity = IsValid(entity) and IsValid(entity:GetNWEntity("FMRedirect")) and entity:GetNWEntity("FMRedirect") or entity
-	
+
 	if IsValid(entity) and (entity:GetPos() - LocalPlayer():GetShootPos()):Length() < 120 then
 		local data = fishingmod.InfoTable.Catch[entity:EntIndex()]
 		if data and data.text then
@@ -73,13 +54,13 @@ hook.Add("Think", "Fishingmod.Keys:Think", function()
 				menu:SetVisible(true)
 				menu:MakePopup()
 			end
-		end	
+		end
 		if input.IsKeyDown(KEY_E) then
 			RunConsoleCommand("fishing_mod_drop_bait")
 		end
 		if input.IsKeyDown(KEY_R) then
 			RunConsoleCommand("fishing_mod_drop_catch")
-		end	
+		end
 	end
 end)
 
@@ -111,9 +92,9 @@ hook.Add("CalcView", "Fishingmod:CalcView", function(ply,offset,angles,fov)
 		view.angles		= angles
 		view.fov		= fov
 
-		local startview = ply:GetShootPos() + 
-			(ply:EyeAngles():Right() * 50) + 
-			(Angle(0,ply:EyeAngles().y,0):Forward() * -150) + 
+		local startview = ply:GetShootPos() +
+			(ply:EyeAngles():Right() * 50) +
+			(Angle(0,ply:EyeAngles().y,0):Forward() * -150) +
 			(Angle(0,0,ply:EyeAngles().r):Up() * 20)
 
 		-- Trace back from the original eye position, so we don't clip through walls/objects
