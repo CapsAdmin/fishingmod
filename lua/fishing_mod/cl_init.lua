@@ -51,15 +51,15 @@ hook.Add( "HUDPaint", "Fishingmod:HUDPaint", function()
 		if data and data.text then
 			local width = 250
 			local height = 85
-			draw.RoundedBox( 8, ScrW() / 2 - (width/2.2), ScrH() / 2 - 5, width, height, Color( 100, 100, 100, 100 ) )
-			draw.DrawText(data.text, "DermaDefault", ScrW() / 2, ScrH() / 2, Color(255,255,255,255),1)
+			draw.RoundedBox( 8, ScrW() / 2 - (width/2), ScrH() / 2 - 3, width, height, Color( 100, 100, 100, 100 ) )
+			draw.DrawText(data.text, "DermaDefault", ScrW() / 2 - (width/3), ScrH() / 2, Color(255,255,255,255),1)
 		end
 		local data = fishingmod.InfoTable.Bait[entity:EntIndex()]
 		if data and data.text then
-			local width = 200
+			local width = 240
 			local height = 20
-			draw.RoundedBox( 8, ScrW() / 2 - (width/2.2), ScrH() / 2 - 5, width, height, Color( 100, 100, 100, 100 ) )
-			draw.DrawText(data.text, "DermaDefault", ScrW() / 2, ScrH() / 2, Color(255,255,255,255),1)
+			draw.RoundedBox( 8, ScrW() / 2 - (width/2), ScrH() / 2 - 3, width, height, Color( 100, 100, 100, 100 ) )
+			draw.DrawText(data.text, "DermaDefault", ScrW() / 2 - (width/3), ScrH() / 2, Color(255,255,255,255),1)
 		end
 	end
 end)
@@ -103,14 +103,36 @@ end)
 
 hook.Add("CalcView", "Fishingmod:CalcView", function(ply,offset,angles,fov)
 	if GetViewEntity() ~= ply then return end
-	if ply:GetFishingRod() and not ply:InVehicle() then
-					
-		local offset = ply:GetShootPos() + 
+	local fishingRod = ply:GetFishingRod()
+	if fishingRod and not ply:InVehicle() then
+
+		local view = {}
+		view.origin		= offset
+		view.angles		= angles
+		view.fov		= fov
+
+		local startview = ply:GetShootPos() + 
 			(ply:EyeAngles():Right() * 50) + 
 			(Angle(0,ply:EyeAngles().y,0):Forward() * -150) + 
 			(Angle(0,0,ply:EyeAngles().r):Up() * 20)
-		angles.p = math.Clamp(angles.p-30, -70, 15)			
-		
-		return GAMEMODE:CalcView(ply,offset,angles,fov)
+
+		-- Trace back from the original eye position, so we don't clip through walls/objects
+		local fbobber = ( fishingRod.GetBobber != nil and IsValid(fishingRod:GetBobber()) ) and fishingRod:GetBobber()
+		local fhook = ( fishingRod.GetHook != nil and IsValid(fishingRod:GetHook()) ) and fishingRod:GetHook()
+		local WallOffset = 4
+
+		local tr = util.TraceHull( {
+			start = view.origin,
+			endpos = startview,
+			filter = { ply, fishingRod, fbobber, fhook },
+			mins = Vector( -WallOffset, -WallOffset, -WallOffset ),
+			maxs = Vector( WallOffset, WallOffset, WallOffset ),
+		} )
+
+		view.origin = tr.HitPos
+		view.angles.p = math.Clamp(view.angles.p-30, -70, 15)
+
+		return view
+
 	end
 end)
