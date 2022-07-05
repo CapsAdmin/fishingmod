@@ -112,7 +112,7 @@ local POSITIONS = {
 function fishingmod.LoadPlayerInfo(ply, name)
 	if name then assert(POSITIONS[name], "Unknown data name '"..tostring(name).."'") end
 	
-	if MIGRATION.legacy.check (ply) then
+	if MIGRATION.legacy.check (ply) and not game.SinglePlayer() then
 		Msg ("[fishingmod] ") print ("Can migrate legacy fishingmod data from player: "..tostring(ply).."...")
 		local data = MIGRATION.legacy.read (ply)
 		PrintTable (data)
