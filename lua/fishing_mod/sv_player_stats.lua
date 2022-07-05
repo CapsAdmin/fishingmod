@@ -34,7 +34,7 @@ local POSITIONS = {
 	local MIGRATION = {}
 	
 	local function MIGRATION_SAVE_NEW_DATA (ply, data)
-		local uid = ply:UniqueID()
+		local uid = ply:SteamID64()
 		file.CreateDir("fishingmod")
 		file.CreateDir("fishingmod/"..uid:sub(1,1))
 		
@@ -55,6 +55,7 @@ local POSITIONS = {
 	-- old fishingmod
 		MIGRATION.legacy = {
 			check = function (ply)
+				if game.SinglePlayer() then return false end
 				return file.IsDir("fishingmod/"..ply:UniqueID(), "DATA")
 			end,
 			read = function (ply)
@@ -72,6 +73,41 @@ local POSITIONS = {
 			end
 		}
 	-- / old fishingmod
+	-- uniqueIDs
+		MIGRATION.uniqueid = {
+			check = function (ply)
+				local uid = tostring(ply:UniqueID())
+				return file.Exists("fishingmod/"..uid:sub(1,1).."/"..uid..".txt", "DATA")
+			end,
+			read = function (ply)
+				local uid = tostring(ply:UniqueID())
+
+				local fh = file.Open("fishingmod/"..uid:sub(1,1).."/"..uid..".txt", "rb", "DATA")
+				assert (fh, "Error opening file for player "..tostring(ply))
+				local version = fh:ReadByte()
+				if not version then
+					fh:Close() ErrorNoHalt("[fishingmod] File is empty.") return
+				elseif version ~= 0x01 then
+					fh:Close() error("Unsupported version: "..version)
+				end
+
+				local data = {}
+				
+				for info_n, info_p in next, POSITIONS do
+					fh:Seek(info_p)
+					data [info_n] = fh:ReadDouble()
+				end
+				
+				fh:Close()
+				return data
+			end,
+			cleanup = function (ply)
+				local uid = tostring(ply:UniqueID())
+				file.Delete("fishingmod/"..uid:sub(1,1).."/"..uid..".txt")
+				file.Delete("fishingmod/"..uid:sub(1,1))
+			end
+		}
+	-- / uniqueIDs
 -- / MIGRATION
 
 function fishingmod.LoadPlayerInfo(ply, name)
@@ -85,8 +121,16 @@ function fishingmod.LoadPlayerInfo(ply, name)
 		MIGRATION.legacy.cleanup (ply)
 		print ("Success.")
 	end
+	if MIGRATION.uniqueid.check(ply) then
+		Msg ("[fishingmod] ") print ("Can migrate uniqueid fishingmod data from player: "..tostring(ply).."...")
+		local data = MIGRATION.uniqueid.read (ply)
+		PrintTable (data)
+		MIGRATION_SAVE_NEW_DATA (ply, data)
+		MIGRATION.uniqueid.cleanup (ply)
+		print ("Success.")
+	end
 	
-	local uid = ply:UniqueID()
+	local uid = ply:SteamID64()
 	local filep = "fishingmod/"..uid:sub(1,1).."/"..uid..".txt"
 	
 	if file.Exists(filep, "DATA") then
@@ -120,7 +164,7 @@ end
 
 function fishingmod.SavePlayerInfo(ply, name, data)
 	assert(POSITIONS[name], "Unknown data name '"..tostring(name).."'")
-	local uid = ply:UniqueID()
+	local uid = ply:SteamID64()
 	file.CreateDir("fishingmod")
 	file.CreateDir("fishingmod/"..uid:sub(1,1))
 	
