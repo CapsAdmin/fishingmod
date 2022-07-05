@@ -72,7 +72,7 @@ local POSITIONS = {
 			end
 		}
 	-- / old fishingmod
-	-- uniqueIDs (broken in singleplayer)
+	-- uniqueIDs
 		MIGRATION.uniqueid = {
 			check = function (ply)
 				local uid = tostring(ply:UniqueID())
@@ -169,7 +169,7 @@ function fishingmod.SavePlayerInfo(ply, name, data)
 	
 	local p_data = fishingmod.LoadPlayerInfo(ply) or {}
 	p_data [name] = data
-
+	
 	local fh = file.Open("fishingmod/"..uid:sub(1,1).."/"..uid..".txt", "wb", "DATA")
 	assert (fh, "Error opening file for player "..tostring(ply))
 	fh:WriteByte(VERSION)
