@@ -32,7 +32,7 @@ if SERVER then
 		self:SetMoveType(MOVETYPE_VPHYSICS)
 		self:SetSolid(SOLID_VPHYSICS)
 		self:SetCollisionGroup(COLLISION_GROUP_INTERACTIVE)
-		self:SetColor(0,0,0,0)
+		self:SetColor(Color(0,0,0,0))
 		
 		self.dt.Core = math.random(0,3)
 		
@@ -115,7 +115,7 @@ else
 	function ENT:Draw()
 		
 		self:DrawShadow(false)
-		self:SetColor(0,0,0,0)
+		self:SetColor(Color(0,0,0,0))
 		
 	end
 	
